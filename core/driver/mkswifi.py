@@ -35,6 +35,7 @@ import asyncio
 import datetime as dt
 import logging
 import re
+import time
 from enum import Enum
 from pathlib import Path
 from typing import Final, Optional
@@ -117,11 +118,11 @@ class MKSPrinter:
     # Low‑level I/O helpers
     # ---------------------------------------------------------------------
 
-    async def _send_raw(self, line: str) -> None:
+    async def _send_raw(self, gcode: GCodes) -> None:
         if not self.writer:
             raise RuntimeError("Not connected")
-        logger.debug(">> %s", line.strip())
-        self.writer.write(f"{line}\r\n".encode())
+        logger.debug(">> %s", gcode.strip())
+        self.writer.write(f"{gcode.strip()}\r\n".encode())
         await self.writer.drain()
 
     async def _read_raw(self) -> str:
@@ -149,7 +150,7 @@ class MKSPrinter:
                 return ""
         return first  # Some commands may reply without the leading ok
 
-    async def send(self, gcode: str | GCodes) -> str:
+    async def send(self, gcode: GCodes) -> str:
         """Send *gcode* and return the payload line (empty if none)."""
         await self._send_raw(gcode)
         try:
@@ -162,16 +163,11 @@ class MKSPrinter:
     # High‑level helpers
     # ---------------------------------------------------------------------
 
-    async def poll(self) -> dict[str, object]:
+    async def poll(self, seconds: float = 0.5) -> dict[str, object]:
         """Retrieve temperatures, progress, elapsed time and state."""
         fresh: dict[str, object] = {}
-        
-        temp = await self.send(self.GCodes.TEMP_QUERY)
-        prog = await self.send(self.GCodes.PROGRESS)
-        elap = await self.send(self.GCodes.ELAPSED)
-        state = await self.send(self.GCodes.STATE)
 
-        if m := TEMP_RE.search(temp):
+        if m := TEMP_RE.search(await self.send(self.GCodes.TEMP_QUERY)):
             fresh["temps"] = {
                 "T": float(m[1]),
                 "Tset": float(m[2]),
@@ -179,18 +175,21 @@ class MKSPrinter:
                 "Bset": float(m[4]),
             }
 
-        if m := PROG_RE.search(prog):
+        if m := PROG_RE.search(await self.send(self.GCodes.PROGRESS)):
             fresh["progress"] = int(m[1])
 
-        if m := TIME_RE.search(elap):
+        if m := TIME_RE.search(await self.send(self.GCodes.ELAPSED)):
             fresh["elapsed"] = m[1]
 
-        if m := STATE_RE.search(state):
+        if m := STATE_RE.search(await self.send(self.GCodes.STATE)):
             fresh["state"] = m[1]
 
         if fresh:
             fresh["stamp"] = dt.datetime.now().isoformat(timespec="seconds")
             self.latest = fresh
+        
+        time.sleep(seconds)
+
         return fresh
 
     # ---------------------------------------------------------------------
