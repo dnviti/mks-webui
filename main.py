@@ -1,15 +1,55 @@
+# main.py
+"""Application entry‑point for the Ghost‑6 printer API."""
+
+from __future__ import annotations
+
 import asyncio
-from pathlib import Path
+import os
+from contextlib import asynccontextmanager
+
+from fastapi import FastAPI
+
 from core.driver.mkswifi import MKSPrinter
+from api.routes import router as printer_router
 
+# ---------------------------------------------------------------------------
+# Configuration
+# ---------------------------------------------------------------------------
 
-async def main():
-    async with MKSPrinter("192.168.128.67") as p:
-        while True:
-            await p.poll()
-            print(p.latest)
+PRINTER_HOST = os.environ.get("PRINTER_HOST", "192.168.4.1")
+PRINTER_PORT = int(os.environ.get("PRINTER_PORT", 8080))
+POLL_INTERVAL = float(os.environ.get("POLL_INTERVAL", 0.5))
 
-        # await p.upload_gcode(path=Path("~/Downloads/bowl-shape_PLA_8h24m.gcode"))
-        # await p._exec(MKSPrinter.GCodes.SD_START)   # begin printing
+# ---------------------------------------------------------------------------
+# Lifespan context manager
+# ---------------------------------------------------------------------------
 
-asyncio.run(main())
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Create one shared MKSPrinter and tear it down cleanly."""
+    printer = MKSPrinter(PRINTER_HOST, PRINTER_PORT)
+    await printer.connect()
+    app.state.printer = printer
+    app.state.printer_lock = asyncio.Lock()
+    try:
+        yield
+    finally:
+        await printer.close()
+
+# ---------------------------------------------------------------------------
+# FastAPI application
+# ---------------------------------------------------------------------------
+
+app = FastAPI(
+    title="Ghost‑6 printer API",
+    version="1.0.1",
+    description="REST façade around the MKS‑Robin Wi‑Fi protocol",
+    lifespan=lifespan,
+    # --- Swagger & OpenAPI endpoints ---------------------------------
+    docs_url="/swagger",        # interactive UI
+    redoc_url="/redoc",         # optional ReDoc
+    openapi_url="/swagger.json" # raw schema for integrations
+)
+
+# Plug the routes defined in /api/routes.py
+app.include_router(printer_router)
