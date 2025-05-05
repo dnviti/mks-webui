@@ -1,5 +1,5 @@
 # api/routes.py
-"""HTTP endpoints for the Ghost‑6 printer service."""
+"""HTTP endpoints for the Ghost-6 printer service."""
 
 from __future__ import annotations
 

@@ -1,5 +1,5 @@
 # main.py
-"""Application entry‑point for the Ghost‑6 printer API."""
+"""Application entry-point for the Ghost-6 printer API."""
 
 from __future__ import annotations
 
@@ -25,12 +25,12 @@ POLL_INTERVAL = float(os.environ.get("POLL_INTERVAL", 0.5))
 # ---------------------------------------------------------------------------
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(fastapi_app: FastAPI):
     """Create one shared MKSPrinter and tear it down cleanly."""
     printer = MKSPrinter(PRINTER_HOST, PRINTER_PORT)
     await printer.connect()
-    app.state.printer = printer
-    app.state.printer_lock = asyncio.Lock()
+    fastapi_app.state.printer = printer
+    fastapi_app.state.printer_lock = asyncio.Lock()
     try:
         yield
     finally:
@@ -41,9 +41,9 @@ async def lifespan(app: FastAPI):
 # ---------------------------------------------------------------------------
 
 app = FastAPI(
-    title="Ghost‑6 printer API",
+    title="Ghost-6 printer API",
     version="1.0.1",
-    description="REST façade around the MKS‑Robin Wi‑Fi protocol",
+    description="REST façade around the MKS-Robin Wi-Fi protocol",
     lifespan=lifespan,
     # --- Swagger & OpenAPI endpoints ---------------------------------
     docs_url="/swagger",        # interactive UI

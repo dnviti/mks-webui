@@ -187,7 +187,7 @@ class MKSPrinter:
         if fresh:
             fresh["stamp"] = dt.datetime.now().isoformat(timespec="seconds")
             self.latest = fresh
-        
+
         time.sleep(seconds)
 
         return fresh
