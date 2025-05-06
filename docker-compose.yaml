@@ -1,0 +1,10 @@
+services:
+  app:
+    container_name: mks_webapp
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data
+    environment:
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped
