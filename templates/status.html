@@ -1,17 +1,58 @@
 {% extends "base.html" %}
 {% block content %}
-<section id="status">
-  <h2>Live Data</h2>
-  <table>
-    <tr><th>Nozzle&nbsp;(°C)</th><td id="t-nozzle">{{ data.temps.T if data.temps else '—' }}</td></tr>
-    <tr><th>Nozzle Set</th><td id="t-nozzle-set">{{ data.temps.Tset if data.temps else '—' }}</td></tr>
-    <tr><th>Bed&nbsp;(°C)</th><td id="t-bed">{{ data.temps.B if data.temps else '—' }}</td></tr>
-    <tr><th>Bed Set</th><td id="t-bed-set">{{ data.temps.Bset if data.temps else '—' }}</td></tr>
-    <tr><th>Job Name</th><td id="job">{{ data.job or '-' }}</td></tr>
-    <tr><th>Progress</th><td id="progress">{{ data.progress or 0 }} %</td></tr>
-    <tr><th>Elapsed</th><td id="elapsed">{{ data.elapsed or '00:00:00' }}</td></tr>
-    <tr><th>State</th><td id="state">{{ data.state or '—' }}</td></tr>
-  </table>
-  <p class="stamp">Last update: <span id="stamp">{{ data.stamp or '—' }}</span></p>
-</section>
+<!-- temps -->
+<div class="row g-3 mb-4">
+  <div class="col-md-6">
+    <div class="card shadow">
+      <div class="card-header">Nozzle</div>
+      <div class="card-body">
+        <h4 class="card-title">
+          <span id="t-nozzle"        class="me-1">{{ data.temps.T }}</span>°C
+        </h4>
+        <p class="mb-0 text-muted">
+          Set&nbsp;point:&nbsp;<span id="t-nozzle-set">{{ data.temps.Tset }}</span>°C
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-6">
+    <div class="card shadow">
+      <div class="card-header">Bed</div>
+      <div class="card-body">
+        <h4 class="card-title">
+          <span id="t-bed"        class="me-1">{{ data.temps.B }}</span>°C
+        </h4>
+        <p class="mb-0 text-muted">
+          Set&nbsp;point:&nbsp;<span id="t-bed-set">{{ data.temps.Bset }}</span>°C
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- job & progress -->
+<div class="card shadow mb-4">
+  <div class="card-body">
+    <h5 class="card-title">
+      Job:&nbsp;<span id="job">{{ data.job }}</span>
+    </h5>
+
+    <div class="progress mb-2" style="height: 1.25rem;">
+      <div id="progress-bar"
+           class="progress-bar progress-bar-striped"
+           role="progress"
+           style="width: {{ data.progress }}%;"
+           aria-valuemin="0" aria-valuemax="100"
+           aria-valuenow="{{ data.progress }}">
+        <span id="progress-text">{{ data.progress }}</span>
+      </div>
+    </div>
+
+    <div class="d-flex gap-4">
+      <div><strong>Elapsed:</strong> <span id="elapsed">{{ data.elapsed }}</span></div>
+      <div><strong>Last update:</strong> <span id="stamp">{{ data.stamp }}</span></div>
+    </div>
+  </div>
+</div>
 {% endblock %}
