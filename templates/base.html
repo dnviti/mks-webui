@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Ghost-6 Dashboard</title>
+  <link rel="stylesheet" href="{{ url_for('static', path='style.css') }}">
+</head>
+<body>
+  <header>
+    <h1>Flying Bear Ghost 6 — Printer Status</h1>
+  </header>
+
+  {% block content %}{% endblock %}
+
+  <script src="{{ url_for('static', path='app.js') }}"></script>
+</body>
+</html>

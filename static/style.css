@@ -1,0 +1,6 @@
+body { font-family: sans-serif; margin: 2rem; }
+header { margin-bottom: 1.5rem; }
+table { border-collapse: collapse; }
+th, td { padding: .3rem .6rem; border: 1px solid #ccc; }
+th { text-align: left; background: #f2f2f2; }
+.stamp { margin-top: 0.8rem; font-size: 0.9rem; color: #666; }

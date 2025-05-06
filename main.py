@@ -8,9 +8,11 @@ import os
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 
 from core.driver.mkswifi import MKSPrinter
 from api.routes import router as printer_router
+from api.web import router as web_router
 
 # ---------------------------------------------------------------------------
 # Configuration
@@ -53,3 +55,7 @@ app = FastAPI(
 
 # Plug the routes defined in /api/routes.py
 app.include_router(printer_router)
+app.include_router(web_router)
+
+# Serve /static/* files (CSS & JS)
+app.mount("/static", StaticFiles(directory="static"), name="static")

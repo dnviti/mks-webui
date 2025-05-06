@@ -51,8 +51,21 @@ logger.addHandler(logging.NullHandler())
 # Pre‑compiled regular expressions for parsing Wi‑Fi replies
 # ---------------------------------------------------------------------------
 
-TEMP_RE: Final = re.compile(
-    r"T:\s*(\d+\.?\d*)/(\d+\.?\d*).*B:\s*(\d+\.?\d*)/(\d+\.?\d*)"
+TEMP_RE = re.compile(
+    r"""
+        T:\s*                     # literal 'T:' + optional whitespace
+        (?P<t_now>\d+(?:\.\d+)?)  # current hot‑end temperature
+        \s*/\s*                   # optional spaces – slash – optional spaces
+        (?P<t_set>\d+(?:\.\d+)?)  # target hot‑end temperature
+
+        .*?                       # non‑greedy skip up to next part
+
+        B:\s*                     # literal 'B:'
+        (?P<b_now>\d+(?:\.\d+)?)  # current bed temperature
+        \s*/\s*
+        (?P<b_set>\d+(?:\.\d+)?)  # target bed temperature
+    """,
+    re.VERBOSE,
 )
 PROG_RE: Final = re.compile(r"M27\s+(\d+)")
 TIME_RE: Final = re.compile(r"M992\s+([\d:]+)")
@@ -72,7 +85,7 @@ class MKSPrinter:
     class GCodes(str, Enum):
         """Minimal set of G-codes understood by the MKS Wi-Fi firmware."""
 
-        TEMP_QUERY = "M991"  # Like Marlin M105
+        TEMP_QUERY = "M105"  # Use Marlin Defaul M105 because says "ok"
         PROGRESS = "M27"  # SD/USB print progress (percentage)
         ELAPSED = "M992"  # Elapsed print time (hh:mm:ss)
         STATE = "M997"  # IDLE / PRINTING / PAUSE
@@ -152,11 +165,11 @@ class MKSPrinter:
 
     async def send(self, gcode: GCodes) -> str:
         """Send *gcode* and return the payload line (empty if none)."""
-        await self._send_raw(gcode)
+        await self._send_raw(gcode.strip())
         try:
             return await self._read_response()
         except asyncio.TimeoutError:
-            logger.warning("Timeout while waiting for reply to %s", gcode)
+            logger.warning("Timeout while waiting for reply to %s", gcode.strip())
             return ""
 
     # ---------------------------------------------------------------------
@@ -167,7 +180,12 @@ class MKSPrinter:
         """Retrieve temperatures, progress, elapsed time and state."""
         fresh: dict[str, object] = {}
 
-        if m := TEMP_RE.search(await self.send(self.GCodes.TEMP_QUERY)):
+        temp = await self.send(self.GCodes.TEMP_QUERY)
+        prog = await self.send(self.GCodes.PROGRESS)
+        elap = await self.send(self.GCodes.ELAPSED)
+        stat = await self.send(self.GCodes.STATE)
+
+        if m := TEMP_RE.search(temp):
             fresh["temps"] = {
                 "T": float(m[1]),
                 "Tset": float(m[2]),
@@ -175,13 +193,13 @@ class MKSPrinter:
                 "Bset": float(m[4]),
             }
 
-        if m := PROG_RE.search(await self.send(self.GCodes.PROGRESS)):
+        if m := PROG_RE.search(prog):
             fresh["progress"] = int(m[1])
 
-        if m := TIME_RE.search(await self.send(self.GCodes.ELAPSED)):
+        if m := TIME_RE.search(elap):
             fresh["elapsed"] = m[1]
 
-        if m := STATE_RE.search(await self.send(self.GCodes.STATE)):
+        if m := STATE_RE.search(stat):
             fresh["state"] = m[1]
 
         if fresh:
