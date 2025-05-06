@@ -239,7 +239,7 @@ class MKSPrinter:
     async def start_print(self, filename: str) -> None:
         """Select *filename* and begin (or resume) printing it.
 
-        This helper folds the two-step Marlin/MKS SD‑print sequence into one
+        This helper folds the two-step Marlin/MKS SD-print sequence into one
         call:
 
         1. ``M23 <filename>`` - select the file on the active storage
