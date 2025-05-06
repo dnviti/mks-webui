@@ -52,24 +52,12 @@ logger.addHandler(logging.NullHandler())
 # ---------------------------------------------------------------------------
 
 TEMP_RE = re.compile(
-    r"""
-        T:\s*                     # literal 'T:' + optional whitespace
-        (?P<t_now>\d+(?:\.\d+)?)  # current hot‑end temperature
-        \s*/\s*                   # optional spaces – slash – optional spaces
-        (?P<t_set>\d+(?:\.\d+)?)  # target hot‑end temperature
-
-        .*?                       # non‑greedy skip up to next part
-
-        B:\s*                     # literal 'B:'
-        (?P<b_now>\d+(?:\.\d+)?)  # current bed temperature
-        \s*/\s*
-        (?P<b_set>\d+(?:\.\d+)?)  # target bed temperature
-    """,
-    re.VERBOSE,
+    r'T:\s*(\d+(?:\.\d+)?)\s*/\s*(\d+(?:\.\d+)?).*?B:\s*(\d+(?:\.\d+)?)\s*/\s*(\d+(?:\.\d+)?)'
 )
 PROG_RE: Final = re.compile(r"M27\s+(\d+)")
 TIME_RE: Final = re.compile(r"M992\s+([\d:]+)")
 STATE_RE: Final = re.compile(r"M997\s+(\w+)")
+FILENAME_RE: Final = re.compile(r'^M994\s+([^;]+);(\d+)\s*\r?\n?$')
 
 
 class MKSPrinter:
@@ -89,6 +77,7 @@ class MKSPrinter:
         PROGRESS = "M27"  # SD/USB print progress (percentage)
         ELAPSED = "M992"  # Elapsed print time (hh:mm:ss)
         STATE = "M997"  # IDLE / PRINTING / PAUSE
+        FILENAME = "M994" # FILENAME / FILESIZE (<filename>;<size>)
 
         # SD/USB file management
         SD_BEGIN = "M28 {name}"  # Start upload (open file for write)
@@ -180,10 +169,15 @@ class MKSPrinter:
         """Retrieve temperatures, progress, elapsed time and state."""
         fresh: dict[str, object] = {}
 
+        await self.connect()
+
         temp = await self.send(self.GCodes.TEMP_QUERY)
+        jobn = await self.send(self.GCodes.FILENAME)
         prog = await self.send(self.GCodes.PROGRESS)
         elap = await self.send(self.GCodes.ELAPSED)
         stat = await self.send(self.GCodes.STATE)
+
+        await self.close()
 
         if m := TEMP_RE.search(temp):
             fresh["temps"] = {
@@ -195,6 +189,9 @@ class MKSPrinter:
 
         if m := PROG_RE.search(prog):
             fresh["progress"] = int(m[1])
+
+        if m := FILENAME_RE.search(jobn):
+            fresh["job"] = m[1]
 
         if m := TIME_RE.search(elap):
             fresh["elapsed"] = m[1]

@@ -44,30 +44,6 @@ def _get_resources(request: Request) -> tuple[MKSPrinter, asyncio.Lock]:
 # ---------------------------------------------------------------------------
 
 @router.get(
-    "/printer/raw/temp", 
-    response_model=str,
-    tags=["Printer"],
-)
-async def printer_status(
-    resources: tuple[MKSPrinter, asyncio.Lock] = Depends(_get_resources),
-) -> str:
-    """
-    Current printer temps in RAW.
-    T:31 /0 B:27 /0 T0:31 /0 T1:0 /0 @:0 B@:0
-    """
-    printer, lock = resources
-    async with lock:
-        try:
-            fresh = await printer.send(printer.GCodes.TEMP_QUERY)
-        except Exception as exc:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=str(exc),
-            ) from exc
-
-    return fresh or printer.latest
-
-@router.get(
     "/printer/status",
     response_model=Dict[str, Any],
     tags=["Printer"],

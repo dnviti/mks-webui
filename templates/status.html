@@ -7,6 +7,7 @@
     <tr><th>Nozzle Set</th><td id="t-nozzle-set">{{ data.temps.Tset if data.temps else '—' }}</td></tr>
     <tr><th>Bed&nbsp;(°C)</th><td id="t-bed">{{ data.temps.B if data.temps else '—' }}</td></tr>
     <tr><th>Bed Set</th><td id="t-bed-set">{{ data.temps.Bset if data.temps else '—' }}</td></tr>
+    <tr><th>Job Name</th><td id="job">{{ data.job or '-' }}</td></tr>
     <tr><th>Progress</th><td id="progress">{{ data.progress or 0 }} %</td></tr>
     <tr><th>Elapsed</th><td id="elapsed">{{ data.elapsed or '00:00:00' }}</td></tr>
     <tr><th>State</th><td id="state">{{ data.state or '—' }}</td></tr>
