@@ -1,22 +1,22 @@
 /* ------------------------------------------------------------
-   Live‑poll printer status and keep the last good data
+   Live-poll printer status and keep the last good data
    ------------------------------------------------------------ */
 
    let lastData = {};          // snapshot of the latest complete state
 
    async function refresh() {
      try {
-       const resp = await fetch("/printer/status");
+       const resp = await fetch("/api/v1/printers/1/status");
        if (!resp.ok) throw new Error(resp.statusText);
        const incoming = await resp.json();
    
-       /* -------- deep‑merge: overwrite only keys that arrived -------- */
+       /* -------- deep-merge: overwrite only keys that arrived -------- */
        lastData = {
          ...lastData,
-         ...incoming,                       // top‑level keys
+         ...incoming,                       // top-level keys
          temps: {
            ...(lastData.temps || {}),
-           ...(incoming.temps || {})        // per‑temperature keys
+           ...(incoming.temps || {})        // per-temperature keys
          }
        };
      } catch (err) {

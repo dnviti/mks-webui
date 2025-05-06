@@ -48,7 +48,7 @@ logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
 # ---------------------------------------------------------------------------
-# Pre‑compiled regular expressions for parsing Wi‑Fi replies
+# Pre-compiled regular expressions for parsing Wi-Fi replies
 # ---------------------------------------------------------------------------
 
 TEMP_RE = re.compile(
@@ -85,7 +85,7 @@ class MKSPrinter:
         SD_SELECT = "M23 {name}"  # Select file for printing
         SD_START = "M24"  # Start/Resume print
         SD_PAUSE = "M25"  # Pause print
-        SD_ABORT = "M26"  # Abort print (MKS re‑uses 26 instead of Marlin M524)
+        SD_ABORT = "M26"  # Abort print (MKS re-uses 26 instead of Marlin M524)
 
         SWITCH_FS = "M998"  # Toggle SD ⟷ USB
 
@@ -117,7 +117,7 @@ class MKSPrinter:
             logger.debug("Connection closed")
 
     # ---------------------------------------------------------------------
-    # Low‑level I/O helpers
+    # Low-level I/O helpers
     # ---------------------------------------------------------------------
 
     async def _send_raw(self, gcode: GCodes) -> None:
@@ -162,7 +162,7 @@ class MKSPrinter:
             return ""
 
     # ---------------------------------------------------------------------
-    # High‑level helpers
+    # High-level helpers
     # ---------------------------------------------------------------------
 
     async def poll(self, seconds: float = 0.5) -> dict[str, object]:
@@ -221,7 +221,7 @@ class MKSPrinter:
         if ack.lower().startswith("error"):
             raise RuntimeError(ack)
 
-        # Stream file line‑by‑line
+        # Stream file line-by-line
         try:
             with path.open("r", encoding="utf-8", errors="ignore") as fp:
                 for line in fp:
@@ -233,7 +233,7 @@ class MKSPrinter:
             await self.send(self.GCodes.SD_END)
 
     # ---------------------------------------------------------------------
-    # Print‑control helpers
+    # Print-control helpers
     # ---------------------------------------------------------------------
 
     async def start_print(self, filename: str) -> None:

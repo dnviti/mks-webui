@@ -33,30 +33,33 @@
     <div class="container-fluid">
       <span class="navbar-brand fw-semibold">{{ printer_name }}</span>
 
-      <!-- slot for live state badge (JS will update) -->
-      <span class="badge text-bg-warning" id="state-badge">IDLE</span>
+      {% if request.scope["route"].name == 'live_status' %}
+        <!-- slot for live state badge (JS will update) -->
+        <span class="badge text-bg-warning" id="state-badge">IDLE</span>
+      {% endif %}
     </div>
   </nav>
 
+
   <div class="d-flex">
     <!-- Left menu -->
+    {% macro nav_item(endpoint, label) -%}
+    <a href="{{ url_for(endpoint) }}"
+       class="list-group-item list-group-item-action {% if request.scope["route"].name == endpoint %}active{% endif %}">
+      {{ label }}
+    </a>
+    {%- endmacro %}
+  
     <aside id="sidebar" class="bg-white border-end">
       <nav class="list-group list-group-flush">
-        <a href="#" class="list-group-item list-group-item-action active">
-          Live Status
-        </a>
-        <a href="#" class="list-group-item list-group-item-action disabled">
-          History
-        </a>
-        <a href="#" class="list-group-item list-group-item-action disabled">
-          Files
-        </a>
-        <a href="#" class="list-group-item list-group-item-action disabled">
-          Settings
-        </a>
+        {{ nav_item('live_status', 'Live Status') }}
+        {{ nav_item('printers',    'Printers') }}
+        {{ nav_item('history',     'History') }}
+        {{ nav_item('files',       'Files') }}
+        {{ nav_item('settings',    'Settings') }}
       </nav>
     </aside>
-
+  
     <!-- Main content -->
     <main class="flex-grow-1 p-4">
       {% block content %}{% endblock %}
@@ -67,6 +70,5 @@
   <script
     src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js">
   </script>
-  <script src="{{ url_for('static', path='app.js') }}"></script>
 </body>
 </html>

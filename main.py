@@ -10,9 +10,11 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
+from core import models
+from core.database import engine
 from core.driver.mkswifi import MKSPrinter
-from api.routes import router as printer_router
-from api.web import router as web_router
+
+from api import printers, web
 
 # ---------------------------------------------------------------------------
 # Configuration
@@ -28,7 +30,12 @@ POLL_INTERVAL = float(os.environ.get("POLL_INTERVAL", 0.5))
 
 @asynccontextmanager
 async def lifespan(fastapi_app: FastAPI):
-    """Create one shared MKSPrinter and tear it down cleanly."""
+    """
+    Create one shared MKSPrinter and tear it down cleanly.
+    Automatically create database on startup
+    """
+    models.Base.metadata.create_all(bind=engine)
+    print("📦  DB ready")
     printer = MKSPrinter(PRINTER_HOST, PRINTER_PORT)
     await printer.connect()
     fastapi_app.state.printer = printer
@@ -36,6 +43,7 @@ async def lifespan(fastapi_app: FastAPI):
     try:
         yield
     finally:
+        print("👋  shutting down")
         await printer.close()
 
 # ---------------------------------------------------------------------------
@@ -53,9 +61,9 @@ app = FastAPI(
     openapi_url="/swagger.json" # raw schema for integrations
 )
 
-# Plug the routes defined in /api/routes.py
-app.include_router(printer_router)
-app.include_router(web_router)
+# Plug the routes defined in /api/*.py
+app.include_router(printers.router)
+app.include_router(web.router)
 
 # Serve /static/* files (CSS & JS)
 app.mount("/static", StaticFiles(directory="static"), name="static")

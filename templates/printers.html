@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1 class="title">3-D Printers</h1>
+<table>
+  <thead><tr><th>ID</th><th>Name</th><th>IP</th><th>Port</th></tr></thead>
+  <tbody>
+  {% for p in printers %}
+  <tr><td>{{p.id}}</td><td>{{p.name}}</td><td>{{p.ip_address}}</td><td>{{p.port}}</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

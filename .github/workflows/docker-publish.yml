@@ -1,0 +1,51 @@
+# .github/workflows/docker-publish.yml
+name: Build & Publish container
+
+on:
+  push:
+    branches: [main] # rebuild on every push to main
+  workflow_dispatch: # allow manual runs from Actions tab
+
+# Allow the job to read the repo and write packages (GHCR images)
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1️⃣  Check out the source
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2️⃣  Set up Docker Buildx (multi-arch builder)
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3 # enables ARM emulation
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # 3️⃣  Log in to GitHub Container Registry
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          # GITHUB_TOKEN has package-write permission because of the `packages: write` setting above
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # 4️⃣  Build and push the image
+      - name: Build & push image
+        uses: docker/build-push-action@v5 # official action from Docker
+        with:
+          context: .
+          file: ./Dockerfile # path to your Dockerfile
+          platforms: linux/amd64,linux/arm64 # build a multi-arch image (remove arm64 if you don’t need it)
+          push: true
+          # Image names → ghcr.io/<owner>/<repo>:<tag>
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/mks-webui:latest
+            ghcr.io/${{ github.repository_owner }}/mks-webui:${{ github.sha }}
+          cache-from: type=gha # speed subsequent builds by pulling cache
+          cache-to: type=gha,mode=max
